@@ -29,9 +29,9 @@
 ;;;  
 
 ;; forwarding
-(define-library (postgresql)
-  (import (postgresql apis)
-	  (postgresql conditions))
+(define-library (cyclone postgresql)
+  (import (cyclone postgresql apis)
+	  (cyclone postgresql conditions))
   (export make-postgresql-connection
 	  postgresql-connection?
 	  postgresql-open-connection!
@@ -80,5 +80,4 @@
 	  postgresql-error-table
 	  postgresql-error-column
 	  postgresql-error-data-type
-	  postgresql-error-constraint
-	  ))
+	  postgresql-error-constraint))

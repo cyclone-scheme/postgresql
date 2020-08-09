@@ -32,7 +32,7 @@
 ;; explicit buffering layer.
 ;; This library provides buffering of socket port.
 ;; (NB: implmented atop custom port would be cleaner if we could use.)
-(define-library (postgresql buffer)
+(define-library (cyclone postgresql buffer)
   (export postgresql-send-ssl-request
 	  postgresql-send-startup-message
 	  postgresql-send-password-message
@@ -50,13 +50,11 @@
 	  postgresql-send-copy-done-message
 	  postgresql-read-response
 
-	  make-postgresql-out-buffer
-	  )
+	  make-postgresql-out-buffer)
   (import (scheme base)
 	  (scheme write)
-	  (prefix (postgresql messages) m:))
+	  (prefix (cyclone postgresql messages) m:))
   (begin
-
     (define-record-type postgresql-out-buffer
       (%make-postgresql-out-buffer sock-out buffer)
       postgresql-out-buffer?
@@ -128,6 +126,4 @@
     (define-buffering postgresql-send-copy-done-message
       m:postgresql-send-copy-done-message)
     
-    (define postgresql-read-response m:postgresql-read-response)
-    )
-  )
+    (define postgresql-read-response m:postgresql-read-response)))

@@ -28,7 +28,7 @@
 ;;;   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;;  
 
-(define-library (postgresql messages)
+(define-library (cyclone postgresql messages)
   (export postgresql-send-ssl-request
 	  postgresql-send-startup-message
 	  postgresql-send-password-message
@@ -44,26 +44,21 @@
 	  postgresql-send-copy-data-message
 	  postgresql-send-copy-fail-message
 	  postgresql-send-copy-done-message
-	  postgresql-read-response
-	  )
+	  postgresql-read-response)
   (import (scheme base) 
 	  (scheme write)
-	  (postgresql conditions)
-	  (postgresql misc socket)
-	  (postgresql misc bytevectors)
-	  (postgresql misc io))
-  (cond-expand
-   ((library (srfi 19))
-    (import (srfi 19)))
-   (else 
-    (begin 
-      (define (time? o) #f)
-      (define (time-utc->date t) t)
-      (define (date? o) #f)
-      (define (date->string d f) d)
-      (define (date-nanosecond d) 0)
-      (define (date-zone-offset d) 0))))
+          (srfi 106)
+          (cyclone bytevector)
+	  (cyclone postgresql conditions)
+	  (cyclone postgresql misc io))
   (begin
+    (define (time? o) #f)
+    (define (time-utc->date t) t)
+    (define (date? o) #f)
+    (define (date->string d f) d)
+    (define (date-nanosecond d) 0)
+    (define (date-zone-offset d) 0)
+
     (define (send-s32 out v) (write-u32-be v out))
     (define (send-s16 out v) (write-u16-be v out))
     (define (send-string out s)
@@ -256,7 +251,7 @@
 		   (else
 		    (error "postgresql-send-bind-message: unsupported type" v)))
 		  (loop (+ i 1)))))))
-		  
+      
       (define (->bytevector v) 
 	(cond ((string? v) (string->utf8 v))
 	      ((number? v) (string->utf8 (number->string v)))
@@ -314,7 +309,7 @@
 		  params)
 	(send-s16 out formats-len)
 	(flush-output-port out)))
-	
+    
     (define (postgresql-send-execute-message out name maxnum)
       (let ((bv (string->utf8 name)))
 	(write-u8 (char->integer #\E) out)
@@ -351,8 +346,4 @@
       (write-u8 (char->integer #\d) out)
       (send-s32 out (+ 4 (bytevector-length data)))
       (send-bytes out data)
-      (flush-output-port out))
-
-    )
-
-  )
+      (flush-output-port out))))

@@ -1,8 +1,8 @@
 ;;; -*- mode:scheme; coding:utf-8; -*-
 ;;;
-;;; postgresql/digest/md5.sld - PostgreSQL MD5 hash
+;;; postgresql/misc/ssl.sld - SSL/TLS
 ;;;  
-;;;   Copyright (c) 2014-2015  Takashi Kato  <ktakashi@ymail.com>
+;;;   Copyright (c) 2017  Takashi Kato  <ktakashi@ymail.com>
 ;;;   
 ;;;   Redistribution and use in source and binary forms, with or without
 ;;;   modification, are permitted provided that the following conditions
@@ -28,38 +28,20 @@
 ;;;   SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ;;;  
 
-;; TODO should we return string???
-(define-library (postgresql digest md5)
+;; To implement when we get a ssl package
+(define-library (cyclone postgresql misc ssl)
+  (export socket->ssl-socket
+	  ssl-socket-input-port
+	  ssl-socket-output-port
+	  ssl-socket? ssl-socket-close)
   (import (scheme base))
-  (cond-expand
-   (sagittarius
-    (import (math) (postgresql misc bytevectors) (rnrs))
-    (begin
-      (define (md5 src)
-	(let ((bv (cond ((string? src) (string->utf8 src))
-			((bytevector? src) src)
-			(else
-			 (error "md5: must be string or bytevector" src)))))
-	  
-	  (bytevector->hex-string (hash MD5 bv))))))
-   (else
-    (cond-expand
-     ((library (rnrs))
-      (import (rename (only (rnrs)
-			    bitwise-and bitwise-ior bitwise-xor
-			    bitwise-arithmetic-shift)
-		      (bitwise-arithmetic-shift arithmetic-shift))))
-     ((library (srfi 60))
-      (import (srfi 60)))
-     ((library (srfi 33))
-      (import (srfi 33)))
-     (else (begin (error '(digest md5) "bitwise library is required"))))
-    (import (postgresql misc bytevectors))
-    (include "md5.scm")
-    #;
-    (begin
-      (define (%md5 src)
-	(let ((s (md5 src)))
-	  (hex-string->bytevector s))))))
-  (export md5 #;(rename %md5 md5)
-	  ))
+  (begin
+    (define (socket->ssl-socket socket)
+      (error "socket->ssl-socket: not supported (PR is welcome)"))
+    (define (ssl-socket-input-port socket)
+      (error "ssl-socket-input-port: not supported (PR is welcome)"))
+    (define (ssl-socket-output-port socket)
+      (error "ssl-socket-output-port: not supported (PR is welcome)"))
+    (define (ssl-socket? obj) #f)
+    (define (ssl-socket-close socket)
+      (error "ssl-socket-close: not supported (PR is welcome)"))))

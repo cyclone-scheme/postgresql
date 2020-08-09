@@ -1,35 +1,36 @@
-PostgreSQL binding for R7RS Scheme
-==================================
+# postgresql
 
-This is a PostgreSQL socket frontend interface library written in pure
-R7RS Scheme.
+## Index 
+- [Intro](#Intro)
+- [Dependencies](#Dependencies)
+- [Test dependencies](#Test-dependencies)
+- [Foreign dependencies](#Foreign-dependencies)
+- [API](#API)
+- [Examples](#Examples)
+- [Author(s)](#Author(s))
+- [Maintainer(s)](#Maintainer(s))
+- [Version](#Version) 
+- [License](#License) 
+- [Tags](#Tags) 
 
-NOTE: it's still working state.
+## Intro 
+This is a PostgreSQL socket frontend interface library written in pure R7RS Scheme. Original code can be found [here](https://github.com/ktakashi/r7rs-postgresql).
 
+## Dependencies 
+`bytevector` `md5`
 
-Supported implementations
--------------------------
+## Test-dependencies 
+None
 
-- Sagittarius 0.5.9 or later
-- Gauche 0.9.4
-- Chibi Scheme 0.7
+## Foreign-dependencies 
+None
 
-This library should work in R7RS implementations which support
-the following SRFIs:
-
-- SRFI-60/SRFI-33 or R6RS library `(rnrs)`
-- SRFI-106
-- SRFI-19 (Optional)
-
-
-High level APIs
----------------
+## API 
 
 ### Library
 
 - `(postgresql)` The library provides high level APIs to communicate
   with PostgreSQL.
-
 
 ### Procedures
 
@@ -222,14 +223,11 @@ High level APIs
   PostgreSQL source. The _value_ is a raw value of SQL query,
   bytevector.
 
-Low level APIs
---------------
+## Low level APIs
 
 TBD
 
-
-Data conversion
----------------
+## Data conversion
 
 Data conversion is done automatically by high level APIs. The following table
 describes how it's done.
@@ -248,18 +246,222 @@ _Note_: If the implementation doesn't support SRFI-19, the scheme type
 will be string.
 
 
-Copyright and lincense
-----------------------
+## Examples
 
+```scheme
+(import (scheme base)
+	(scheme write)
+	(cyclone postgresql))
+
+(define (print . args) (for-each display args) (newline))
+
+;; user: postgres
+;; pass: postgres
+(define conn (make-postgresql-connection 
+	      "localhost" "5432" #f "postgres" "postgres"))
+
+(print "open connection")
+;; open the connection
+(postgresql-open-connection! conn)
+
+;; login
+(print "login")
+(postgresql-login! conn)
+
+(print "create tables")
+;; may not be there yet (causes an error if there isn't)
+(guard (e (else #t)) (postgresql-execute-sql! conn "drop table test"))
+(guard (e (else (print (error-object-message e))))
+  (postgresql-execute-sql! conn
+    "create table test (id integer, name varchar(50))"))
+(postgresql-terminate! conn)
+
+(postgresql-open-connection! conn)
+(postgresql-login! conn)
+
+(print "simple query")
+(let ((r (postgresql-execute-sql! conn "select * from test")))
+  (print (postgresql-query-descriptions r))
+  (print (postgresql-fetch-query! r)))
+
+(postgresql-execute-sql! conn 
+  "insert into test (id, name) values (1, 'name')")
+(postgresql-execute-sql! conn 
+  "insert into test (id, name) values (2, 'test name')")
+(postgresql-execute-sql! conn 
+  "insert into test (id, name) values (-1, 'test name2')")
+(postgresql-execute-sql! conn  "commit")
+
+(print "insert with prepared statement")
+(let ((p (postgresql-prepared-statement 
+	  conn "insert into test (id, name) values ($1, $2)")))
+  (print (postgresql-prepared-statement-sql p))
+  (print (postgresql-bind-parameters! p 3 "name"))
+  (let ((q (postgresql-execute! p)))
+    (print q))
+  (postgresql-close-prepared-statement! p))
+
+(let ((p (postgresql-prepared-statement 
+	  conn "insert into test (id, name) values ($1, $2)")))
+  (print (postgresql-prepared-statement-sql p))
+  (print (postgresql-bind-parameters! p 3 '()))
+  (let ((q (postgresql-execute! p)))
+    (print q))
+  (postgresql-close-prepared-statement! p))
+
+(print "select * from test")
+(let ((r (postgresql-execute-sql! conn "select * from test")))
+  (print (postgresql-query-descriptions r))
+  (print (postgresql-fetch-query! r))
+  (print (postgresql-fetch-query! r))
+  (print (postgresql-fetch-query! r))
+  (print (postgresql-fetch-query! r))
+  (print (postgresql-fetch-query! r)))
+
+(let ((p (postgresql-prepared-statement 
+	  conn "select * from test where name = $1")))
+  (print (postgresql-prepared-statement-sql p))
+  (print (postgresql-bind-parameters! p "name"))
+  (let ((q (postgresql-execute! p)))
+    (print q)
+    (print (postgresql-fetch-query! q))
+    (print (postgresql-fetch-query! q)))
+  (postgresql-close-prepared-statement! p))
+
+(let ((p (postgresql-prepared-statement 
+	  conn "select * from test where id = $1")))
+  (print (postgresql-prepared-statement-sql p))
+  (print (postgresql-bind-parameters! p 1))
+  (let ((q (postgresql-execute! p)))
+    (print q)
+    (print (postgresql-fetch-query! q))
+    (print (postgresql-fetch-query! q)))
+  (postgresql-close-prepared-statement! p))
+
+;; delete
+(print "delete")
+(print (postgresql-execute-sql! conn "delete from test"))
+
+;; max column test
+(let ((p (postgresql-prepared-statement 
+	  conn "insert into test (id, name) values ($1, $2)")))
+  (let loop ((i 0))
+    (unless (= i 100)
+      (postgresql-bind-parameters! p i "name")
+      (postgresql-execute! p)
+    (loop (+ i 1))))
+  (postgresql-close-prepared-statement! p))
+
+(let ((p (postgresql-prepared-statement 
+	  conn "select * from test where name = $1")))
+  (print (postgresql-prepared-statement-sql p))
+  (print (postgresql-bind-parameters! p "name"))
+  (let ((q (postgresql-execute! p)))
+    ;; skip first 50
+    (print "skip 50")
+    (do ((i 0 (+ i 1)))
+	((= i 50))
+      (postgresql-fetch-query! q))
+    ;; 51
+    (print "get 51st")
+    (print (postgresql-fetch-query! q))
+    ;; skip next 50
+    (do ((i 0 (+ i 1)))
+	((= i 50))
+      (postgresql-fetch-query! q))
+    (print (postgresql-fetch-query! q)))
+  (postgresql-close-prepared-statement! p))
+
+(let ((q (postgresql-execute-sql! conn "select * from test")))
+  (do ((i 0 (+ i 1)))
+      ((= i 60))
+    (postgresql-fetch-query! q))
+  (print (postgresql-fetch-query! q)))
+
+(postgresql-execute-sql! conn "drop table test")
+
+(print "droping non existing table")
+(guard (e (else (print (error-object-message e))))
+  (postgresql-execute-sql! conn "drop table test"))
+
+;; issue #2 re-creation of prepared statement
+;; ? is not a valid placeholder in PostgreSQL
+(guard (e (else (print e)))
+  (let ((ps (postgresql-prepared-statement 
+             conn "select * from foo where a = ?")))
+    (print ps)
+    (postgresql-close-prepared-statement! ps)))
+;; this hanged
+(guard (e (else (print e)))
+  (let ((ps (postgresql-prepared-statement 
+             conn "select * from foo where a = ?")))
+    (print ps)
+    (postgresql-close-prepared-statement! ps)))
+
+;; terminate and close connection
+(print "terminate")
+(postgresql-terminate! conn)
+```
+
+```scheme
+;; example how to do copy data.
+
+(import (scheme base)
+	(scheme write)
+	(postgresql))
+
+(define conn (make-postgresql-connection 
+	      "localhost" "5432" #f "postgres" "postgres"))
+
+(define (print . args) (for-each display args) (newline))
+
+(postgresql-open-connection! conn)
+(postgresql-login! conn)
+
+(guard (e (else #t)) (postgresql-execute-sql! conn "drop table test"))
+(guard (e (else (print (error-object-message e))))
+  (postgresql-execute-sql! conn
+    "create table test (id integer not null primary key, name varchar(50))"))
+
+(define (copy-handler type payload)
+  (case type
+    ((header) (write payload) (newline))
+    ((data)   (display (utf8->string payload)))))
+
+(define (write-handler n)
+  (let ((count 0))
+    (lambda (type data)
+      (case type
+	((data)
+	 (set! count (+ count 1))
+	 (if (not (= count n)) 
+	     (string->utf8 (string-append (number->string count)
+					  "\tdata\n"))
+	     #f))))))
+
+(*postgresql-copy-data-handler* copy-handler)
+(*postgresql-write-data-handler* (write-handler 100))
+
+(guard (e (else (print e)))
+  (print (postgresql-execute-sql! conn  "copy test from stdin")))
+
+(print (postgresql-execute-sql! conn  "copy test to stdout with delimiter ','"))
+
+(postgresql-terminate! conn)
+```
+
+## Author(s)
+Takashi Kato <ktakashi at ymail dot com>
+
+## Maintainer(s) 
+Arthur Maciel <arthuramciel at gmail dot com>
+
+## Version 
+0.1
+
+## License 
 Copyright 2014-2015 Takashi Kato. Code released under the BSD-style license.
 See [COPYING](COPYING).
 
-
-TODO
-----
-
-- Data conversion is not done properly
-  - need some document but couldn't find it...
-- ~~Prepared statement~~
-- ~~Maybe buffering~~
-  - ~~currently it can't execute second query unless it fetches all records.~~
+## Tags 
+database

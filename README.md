@@ -454,7 +454,7 @@ will be string.
 Takashi Kato <ktakashi at ymail dot com>
 
 ## Maintainer(s) 
-Arthur Maciel <arthuramciel at gmail dot com>
+
 
 ## Version 
 0.1

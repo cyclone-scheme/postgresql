@@ -107,8 +107,26 @@
     (define *postgresql-unknown-type-handler*
       (make-parameter default-unknown-type-handler))
 
+    (define (make-postgresql-connection host port database username password)
+      (%make-postgresql-connection host port database username password
+       #f
+       #f
+       #f
+       #f
+       #f
+       #f
+       #f))
+
     (define-record-type postgresql-connection
-      (make-postgresql-connection host port database username password)
+      (%make-postgresql-connection host port database username password
+       socket   
+       sock-in  
+       sock-out 
+       params   
+       id       
+       key      
+       counter) 
+
       postgresql-connection?
       (host     postgresql-connection-host)
       (port     postgresql-connection-port)
@@ -321,8 +339,11 @@
     (define (postgresql-rollback! conn)
       (postgresql-execute-sql! conn "ROLLBACK"))
 
+    (define (make-postgresql-query connection buffer cursor statement eoq)
+      (%make-postgresql-query connection #f buffer cursor statement eoq))
+
     (define-record-type postgresql-query
-      (make-postgresql-query connection buffer cursor statement eoq)
+      (%make-postgresql-query connection descriptions buffer cursor statement eoq)
       postgresql-query?
       (connection   postgresql-query-connection)
       (descriptions postgresql-query-descriptions
@@ -473,8 +494,11 @@
                 ;; else? ignore
                 (else (loop r rows))))))))
 
+    (define (make-postgresql-prepared-statement connection sql parameters portal)
+      (%make-postgresql-prepared-statement connection sql #f portal parameters #f #f))
+
     (define-record-type postgresql-statement
-      (make-postgresql-prepared-statement connection sql parameters portal)
+      (%make-postgresql-prepared-statement connection sql name portal parameters oids descriptions)
       postgresql-prepared-statement?
       (connection postgresql-prepared-statement-connection)
       (sql        postgresql-prepared-statement-sql)

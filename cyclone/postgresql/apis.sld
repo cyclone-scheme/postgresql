@@ -642,7 +642,8 @@
              (start (find-start name)))
         (or (and start
                  (string->number (string-copy name start
-                                              (- (string-length name) 1))))
+                                              ;(- (string-length name) 1)
+                                              )))
             -1)))
 
     (define (do-execute! prepared query)

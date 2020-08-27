@@ -40,8 +40,7 @@
 (test-begin "APIs")
 (test-assert "connection?" 
              (postgresql-connection? 
-              (make-postgresql-connection "localhost" "5432" 
-                                          #f "postgres" "postgres")))
+              (make-postgresql-connection "localhost" "5432" #f "postgres" "postgres")))
 (test "condition (severity)"
       "ERROR"
       (guard (e ((postgresql-error? e)
@@ -56,8 +55,7 @@
 ;; user: postgres
 ;; pass: postgres
 (define conn (make-postgresql-connection 
-              "localhost" "5432" #f "postgres"
-              (get-environment-variable "PASSWORD")))
+              "localhost" "5432" #f "postgres" (get-environment-variable "PASSWORD")))
 
  (test-group "Table creation"
  (test-assert "open connection" (postgresql-open-connection! conn))
@@ -164,7 +162,7 @@
            (do ((i 0 (+ i 1)))
                ((= i 48))
              (postgresql-fetch-query! q))
-           (test-equal "99" '#(99 "name") (postgresql-fetch-query! q))
+           (test "99" '#(99 "name") (postgresql-fetch-query! q))
            (test-assert (not (postgresql-fetch-query! q))))
          (postgresql-close-prepared-statement! p))
 
@@ -172,7 +170,7 @@
          (do ((i 0 (+ i 1)))
              ((= i 60))
            (postgresql-fetch-query! q))
-         (test-equal "60" '#(60 "name") (postgresql-fetch-query! q))))
+         (test "60" '#(60 "name") (postgresql-fetch-query! q))))
 
      (test-group "Non existing table"
        (postgresql-execute-sql! conn "drop table test")

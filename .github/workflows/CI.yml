@@ -13,7 +13,7 @@ jobs:
     steps:
     # Install dependencies
     - name: Install Dependencies
-      run: sudo apt-get install libck-dev postgres    
+      run: sudo apt-get install libck-dev postgresql postgresql-contrib    
     - name: Install Cyclone
       run: |
         wget https://github.com/cyclone-scheme/binary-releases/raw/master/ubuntu-18.04-lts/cyclone-scheme_0.20_amd64.deb 

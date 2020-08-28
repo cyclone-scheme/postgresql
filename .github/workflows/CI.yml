@@ -19,6 +19,9 @@ jobs:
         wget https://github.com/cyclone-scheme/binary-releases/raw/master/ubuntu-18.04-lts/cyclone-scheme_0.20_amd64.deb 
         sudo apt install ./cyclone-scheme_0.20_amd64.deb
 
+    - name: Install winds packages
+      run: sudo cyclone-winds install bytevector md5
+      
     - uses: actions/checkout@v2
     - name: Build and Test
       run: cyclone test.scm && ./test

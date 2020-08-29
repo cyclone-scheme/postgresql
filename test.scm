@@ -40,7 +40,7 @@
 (test-begin "APIs")
 (test-assert "connection?" 
              (postgresql-connection? 
-              (make-postgresql-connection "localhost" "5432" #f "postgres" "postgres")))
+              (make-postgresql-connection "localhost" "5432" "postgres" "postgres" "postgres")))
 (test "condition (severity)"
       "ERROR"
       (guard (e ((postgresql-error? e)
@@ -55,7 +55,7 @@
 ;; user: postgres
 ;; pass: postgres
 (define conn (make-postgresql-connection 
-              "localhost" "5432" #f "postgres" (get-environment-variable "PASSWORD")))
+              "localhost" "5432" "postgres" "postgres" "postgres"))
 
  (test-group "Table creation"
  (test-assert "open connection" (postgresql-open-connection! conn))

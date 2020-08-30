@@ -3,15 +3,9 @@ name: CI
 on: [push]
 
 jobs:
-  build:
+  runner-job:
 
     runs-on: ubuntu-latest
-    strategy:    
-      matrix:
-        arch: [64]
-
-    # Docker Hub image that `container-job` executes in
-    container: node:10.18-jessie
 
     # Service containers to run with `container-job`
     services:
@@ -28,11 +22,14 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5 
+        ports:
+          # Maps tcp port 5432 on service container to the host
+          - 5432:5432
 
     steps:
     # Install dependencies
     - name: Install Dependencies
-      run: apt-get install libck-dev 
+      run: sudo apt-get install libck-dev 
       #postgresql postgresql-contrib    
     - name: Install Cyclone
       run: |
@@ -40,7 +37,7 @@ jobs:
         sudo apt install ./cyclone-scheme_0.20_amd64.deb
 
     - name: Install winds packages
-      run: cyclone-winds install bytevector md5
+      run: sudo cyclone-winds install bytevector md5
       
     - uses: actions/checkout@v2
     - name: Build and Test

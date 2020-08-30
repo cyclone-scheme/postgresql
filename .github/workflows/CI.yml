@@ -10,10 +10,30 @@ jobs:
       matrix:
         arch: [64]
 
+    # Docker Hub image that `container-job` executes in
+    container: node:10.18-jessie
+
+    # Service containers to run with `container-job`
+    services:
+      # Label used to access the service container
+      postgres:
+        # Docker Hub image
+        image: postgres
+        # Provide the password for postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+           
     steps:
     # Install dependencies
     - name: Install Dependencies
-      run: sudo apt-get install libck-dev postgresql postgresql-contrib    
+      run: sudo apt-get install libck-dev 
+      #postgresql postgresql-contrib    
     - name: Install Cyclone
       run: |
         wget https://github.com/cyclone-scheme/binary-releases/raw/master/ubuntu-18.04-lts/cyclone-scheme_0.20_amd64.deb 
@@ -26,20 +46,3 @@ jobs:
     - name: Build and Test
       run: cyclone test.scm && ./test
 
-#    # Setup winds
-#    - uses: actions/checkout@v2
-#    - name: Build cyclone-winds
-#      run: make
-#    - name: Install cyclone-winds
-#      run: sudo make install
-#      
-#    # Run our tests
-#    - name: Run tests
-#      run: |
-#        make test
-    
-#    - name: Push changes
-#      uses: ad-m/github-push-action@master
-#      with:
-#        github_token: ${{ secrets.GITHUB_TOKEN }}
-#        force: true

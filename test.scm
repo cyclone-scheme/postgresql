@@ -148,6 +148,12 @@
          (postgresql-close-prepared-statement! p))
        (postgresql-execute-sql! conn "commit")
 
+       (let* ((q (postgresql-execute-sql! conn "select MAX(id) from test")))
+         (test "Aggregate - Max" '#(99) (postgresql-fetch-query! q)))
+
+       (let* ((q (postgresql-execute-sql! conn "select Sum(id) from test")))
+         (test "Aggregate - Sum" '#(4950) (postgresql-fetch-query! q)))
+
        (let ((p (postgresql-prepared-statement 
                  conn "select * from test where name = $1")))
          (postgresql-bind-parameters! p "name")
@@ -203,6 +209,14 @@
          (postgresql-close-prepared-statement! p)
          (let ((r (postgresql-execute-sql! conn "select t from text_text")))
            (test `#(,msg) (postgresql-fetch-query! r)))))
+
+     ;; Date/Time
+     (test-group "Date/Time"
+       (let ((q (postgresql-execute-sql! conn  "select '2020-01-01'::date")))
+         (test "date" '#("2020-01-01") (postgresql-fetch-query! q)))
+       (let ((q (postgresql-execute-sql! conn  "select (now() + '1 day') > now()")))
+         (test "date math" '#(#t) (postgresql-fetch-query! q)))
+     )
 
      ;; terminate and close connection
      (postgresql-terminate! conn)

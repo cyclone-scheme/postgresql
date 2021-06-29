@@ -1,6 +1,6 @@
 (package
  (name postgresql)
- (version 0.1)
+ (version "0.1.0")
  (license "BSD")
  (authors "Takashi Kato")
  (maintainers "Justin Ethier")

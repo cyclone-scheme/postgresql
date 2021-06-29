@@ -457,7 +457,7 @@ Takashi Kato <ktakashi at ymail dot com>
 
 
 ## Version 
-0.1
+"0.1.0"
 
 ## License 
 Copyright 2014-2015 Takashi Kato. Code released under the BSD-style license.
